@@ -139,3 +139,9 @@ audio.addEventListener('ended', nextSong);
 // Initial App Setup
 renderPlaylist();
 loadSong(songs[songIndex]);
+// Register Service Worker for PWA App Install
+if ('serviceWorker' in navigator) {
+  window.addEventListener('load', () => {
+    navigator.serviceWorker.register('sw.js');
+  });
+}

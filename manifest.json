@@ -1,0 +1,17 @@
+{
+  "name": "Vibe Music App",
+  "short_name": "VibeMusic",
+  "start_url": "./index.html",
+  "display": "standalone",
+  "background_color": "#0d0e12",
+  "theme_color": "#0d0e12",
+  "orientation": "portrait",
+  "icons": [
+    {
+      "src": "cover.jpg",
+      "sizes": "512x512",
+      "type": "image/jpeg",
+      "purpose": "any maskable"
+    }
+  ]
+}
