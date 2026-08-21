@@ -1,3 +1,6 @@
+// Official YouTube Data API v3 Key
+const YOUTUBE_API_KEY = "AIzaSyCKhAg_uFgUYvle6nFIA7YLQEpPO_Ahb9c";
+
 // DOM Elements
 const audio = document.getElementById('audio');
 const playlistEl = document.getElementById('playlist');
@@ -218,7 +221,7 @@ function renderPlaylist() {
   });
 }
 
-// 4. Multi-Server YouTube Search Engine (Full Songs, Zero Block)
+// 4. Official YouTube Data API v3 Search
 async function fetchOnlineSongs(searchQuery) {
   const query = searchQuery.trim();
   if (!query) return;
@@ -235,56 +238,37 @@ async function fetchOnlineSongs(searchQuery) {
     </div>
   `;
 
-  let videoItems = [];
+  try {
+    const url = `https://www.googleapis.com/youtube/v3/search?part=snippet&type=video&videoCategoryId=10&maxResults=25&q=${encodeURIComponent(query + " song audio")}&key=${YOUTUBE_API_KEY}`;
+    const res = await fetch(url);
+    const data = await res.json();
 
-  // Multi-Instance Invidious & Piped Mirrors
-  const searchEndpoints = [
-    `https://inv.nadeko.net/api/v1/search?q=${encodeURIComponent(query + " song audio")}&type=video`,
-    `https://invidious.nerdvpn.de/api/v1/search?q=${encodeURIComponent(query + " song audio")}&type=video`,
-    `https://yewtu.be/api/v1/search?q=${encodeURIComponent(query + " song audio")}&type=video`,
-    `https://invidious.drgns.space/api/v1/search?q=${encodeURIComponent(query + " song audio")}&type=video`,
-    `https://pipedapi.leptons.xyz/search?q=${encodeURIComponent(query + " song")}&filter=videos`,
-    `https://pipedapi.rshare.online/search?q=${encodeURIComponent(query + " song")}&filter=videos`
-  ];
+    if (data.items && data.items.length > 0) {
+      onlineSongs = data.items.map(item => {
+        const videoId = item.id.videoId;
+        let title = decodeHtml(item.snippet.title);
+        title = title.replace(/\(.*?\)|\[.*?\]/g, "").trim();
+        const artist = decodeHtml(item.snippet.channelTitle);
+        const cover = item.snippet.thumbnails.high?.url || item.snippet.thumbnails.default?.url || "cover.jpg";
 
-  for (const url of searchEndpoints) {
-    if (videoItems.length > 0) break;
-    try {
-      const res = await fetch(url, { headers: { 'Accept': 'application/json' } });
-      if (res.ok) {
-        const json = await res.json();
-        const results = Array.isArray(json) ? json : (json.items || []);
-        if (results.length > 0) {
-          videoItems = results;
-        }
-      }
-    } catch (e) {
-      console.warn("Retrying alternate engine...");
+        return {
+          id: `yt-${videoId}`,
+          videoId: videoId,
+          isYouTube: true,
+          name: title,
+          artist: artist,
+          cover: cover,
+          src: `https://www.youtube.com/watch?v=${videoId}`
+        };
+      });
+
+      renderPlaylist();
+    } else {
+      playlistEl.innerHTML = `<p style="text-align:center; color:#8a8a93; padding:30px; font-size:13px;">No results found on YouTube for "${query}".</p>`;
     }
-  }
-
-  if (videoItems.length > 0) {
-    onlineSongs = videoItems.map(item => {
-      const videoId = item.videoId || (item.url ? item.url.replace('/watch?v=', '') : "");
-      let rawTitle = decodeHtml(item.title || "Song");
-      // Clean unnecessary tags like (Official Audio / Video)
-      let cleanTitle = rawTitle.replace(/\(.*?\)|\[.*?\]/g, "").trim();
-      let author = decodeHtml(item.author || item.uploaderName || "YouTube Music");
-
-      return {
-        id: `yt-${videoId}`,
-        videoId: videoId,
-        isYouTube: true,
-        name: cleanTitle || rawTitle,
-        artist: author,
-        cover: `https://i.ytimg.com/vi/${videoId}/hqdefault.jpg`,
-        src: `https://www.youtube.com/watch?v=${videoId}`
-      };
-    }).filter(s => s.videoId);
-
-    renderPlaylist();
-  } else {
-    playlistEl.innerHTML = `<p style="text-align:center; color:#8a8a93; padding:30px; font-size:13px;">No tracks found for "${query}". Try searching another title.</p>`;
+  } catch (err) {
+    console.error("YouTube API Error:", err);
+    playlistEl.innerHTML = `<p style="text-align:center; color:#ff5555; padding:30px; font-size:13px;">API Error! Please check your connection.</p>`;
   }
 }
 
@@ -371,7 +355,7 @@ searchInput.addEventListener('input', () => {
 openFullPlayerBtn.addEventListener('click', () => fullPlayer.classList.add('open'));
 closeFullPlayerBtn.addEventListener('click', () => fullPlayer.classList.remove('open'));
 
-// 7. Load & Play Logic (Unified HTML5 + YouTube)
+// 7. Unified Audio Engine (Local MP3 + YouTube Audio)
 function loadSong(song) {
   currentPlayingSong = song;
   isYouTubeSong = !!song.isYouTube;
@@ -424,7 +408,7 @@ function playSong() {
       ytPlayer.playVideo();
     }
   } else {
-    audio.play().catch(e => console.log('Playback error:', e));
+    audio.play().catch(e => console.log('Audio playback error:', e));
   }
   renderPlaylist();
 }
@@ -527,7 +511,7 @@ fullRepeatBtn.addEventListener('click', () => {
   }
 });
 
-// 8. Seek Slider & Timers Synchronizer (HTML5 + YouTube)
+// 8. Progress Synchronizer
 function formatTime(sec) {
   if (isNaN(sec) || sec < 0) return "0:00";
   const m = Math.floor(sec / 60);
@@ -535,7 +519,6 @@ function formatTime(sec) {
   return `${m}:${s < 10 ? '0' : ''}${s}`;
 }
 
-// Real-time loop for progress updates
 setInterval(() => {
   let curr = 0;
   let dur = 0;
@@ -576,7 +559,6 @@ fullProgress.addEventListener('input', () => {
 
 audio.addEventListener('ended', nextSong);
 
-// Media Session
 function updateMediaSession(song) {
   if ('mediaSession' in navigator) {
     navigator.mediaSession.metadata = new MediaMetadata({
