@@ -92,7 +92,6 @@ let currentPlayingSong = localSongs[0];
 let isPlaying = false;
 let isShuffle = false;
 let repeatMode = 0;
-let isTrendingLoaded = false;
 
 // Theme Switcher
 const themeDots = document.querySelectorAll('.theme-dot');
@@ -138,7 +137,11 @@ function renderPlaylist() {
   countLiked.innerText = favorites.length;
 
   if (listToRender.length === 0) {
-    playlistEl.innerHTML = `<p style="text-align:center; color:#6c6d7a; padding:30px; font-size:13px;">No tracks found</p>`;
+    if (activeTab === 'online') {
+      playlistEl.innerHTML = `<p style="text-align:center; color:#6c6d7a; padding:30px; font-size:13px;">Type a song name above and tap search 🔍</p>`;
+    } else {
+      playlistEl.innerHTML = `<p style="text-align:center; color:#6c6d7a; padding:30px; font-size:13px;">No tracks found</p>`;
+    }
     return;
   }
 
@@ -181,8 +184,8 @@ function renderPlaylist() {
   });
 }
 
-// ULTRA-FAST JIOSAAVN PARALLEL SEARCH ENGINE (100% Original Songs)
-async function fetchOnlineSongs(searchQuery, isSuggestion = false) {
+// Clean & Direct Online Search
+async function fetchOnlineSongs(searchQuery) {
   const query = searchQuery.trim();
   if (!query) return;
 
@@ -194,46 +197,42 @@ async function fetchOnlineSongs(searchQuery, isSuggestion = false) {
   playlistEl.innerHTML = `
     <div class="loader-box">
       <div class="spinner"></div>
-      <p>${isSuggestion ? '🔥 Loading Trending Bollywood Hits...' : `Searching JioSaavn for "${query}"...`}</p>
+      <p>Searching for "${query}"...</p>
     </div>
   `;
 
-  // Parallel Fetch from Active Mirrors
-  const targetEndpoints = [
-    `https://saavn.dev/api/search/songs?query=${encodeURIComponent(query)}&limit=30`,
+  let rawResults = [];
+
+  // Reliable Endpoints with dedicated proxy
+  const endpoints = [
     `https://jiosaavn-api-private-delta.vercel.app/search/songs?query=${encodeURIComponent(query)}`,
-    `https://saavn.sumit.co/api/search/songs?query=${encodeURIComponent(query)}&limit=30`,
-    `https://api.allorigins.win/raw?url=${encodeURIComponent(`https://saavn.dev/api/search/songs?query=${encodeURIComponent(query)}&limit=30`)}`
+    `https://saavn.me/search/songs?query=${encodeURIComponent(query)}&limit=30`,
+    `https://api.allorigins.win/get?url=${encodeURIComponent(`https://saavn.me/search/songs?query=${encodeURIComponent(query)}&limit=30`)}`,
+    `https://api.allorigins.win/get?url=${encodeURIComponent(`https://saavn.dev/api/search/songs?query=${encodeURIComponent(query)}&limit=30`)}`
   ];
 
-  const fetchWithTimeout = (url, timeout = 3500) => {
-    return new Promise((resolve, reject) => {
-      const timer = setTimeout(() => reject(new Error('Timeout')), timeout);
-      fetch(url)
-        .then(res => res.json())
-        .then(data => {
-          clearTimeout(timer);
-          let items = [];
-          if (Array.isArray(data.data)) items = data.data;
-          else if (data.data && Array.isArray(data.data.results)) items = data.data.results;
-          else if (Array.isArray(data.results)) items = data.results;
+  for (const url of endpoints) {
+    if (rawResults.length > 0) break;
+    try {
+      const res = await fetch(url);
+      if (res.ok) {
+        let json = await res.json();
+        // Parse if allorigins wrapped
+        if (json.contents) {
+          json = JSON.parse(json.contents);
+        }
 
-          if (items.length > 0) resolve(items);
-          else reject(new Error('Empty'));
-        })
-        .catch(err => {
-          clearTimeout(timer);
-          reject(err);
-        });
-    });
-  };
+        if (Array.isArray(json?.data?.results)) rawResults = json.data.results;
+        else if (Array.isArray(json?.data)) rawResults = json.data;
+        else if (Array.isArray(json?.results)) rawResults = json.results;
+      }
+    } catch (e) {
+      console.warn("Retrying alternate endpoint...");
+    }
+  }
 
-  try {
-    // Fast winner promise
-    const rawResults = await Promise.any(targetEndpoints.map(url => fetchWithTimeout(url)));
-
+  if (rawResults && rawResults.length > 0) {
     onlineSongs = rawResults.map(item => {
-      // 1. High Quality Full Track (320kbps or 160kbps)
       let audioSrc = "";
       if (Array.isArray(item.downloadUrl) && item.downloadUrl.length > 0) {
         const hq = item.downloadUrl.find(d => d.quality === '320kbps') || item.downloadUrl[item.downloadUrl.length - 1];
@@ -244,7 +243,6 @@ async function fetchOnlineSongs(searchQuery, isSuggestion = false) {
         audioSrc = item.media_url;
       }
 
-      // 2. HD Album Cover
       let coverSrc = "cover.jpg";
       if (Array.isArray(item.image) && item.image.length > 0) {
         const hqImg = item.image.find(i => i.quality === '500x500') || item.image[item.image.length - 1];
@@ -253,8 +251,7 @@ async function fetchOnlineSongs(searchQuery, isSuggestion = false) {
         coverSrc = item.image;
       }
 
-      // 3. Artist Name
-      let artistName = "JioSaavn Official";
+      let artistName = "Artist";
       if (item.artists && Array.isArray(item.artists.primary) && item.artists.primary.length > 0) {
         artistName = item.artists.primary.map(a => a.name).join(', ');
       } else if (item.primaryArtists) {
@@ -264,7 +261,7 @@ async function fetchOnlineSongs(searchQuery, isSuggestion = false) {
       }
 
       return {
-        id: `online-saavn-${item.id || Math.random()}`,
+        id: `online-track-${item.id || Math.random()}`,
         name: decodeHtml(item.name || item.title || "Song"),
         artist: decodeHtml(artistName),
         src: audioSrc,
@@ -273,48 +270,24 @@ async function fetchOnlineSongs(searchQuery, isSuggestion = false) {
     }).filter(s => s.src && s.src.startsWith('http'));
 
     renderPlaylist();
-  } catch (err) {
-    console.error("All JioSaavn instances failed:", err);
-    playlistEl.innerHTML = `
-      <div style="text-align:center; color:#8a8a93; padding:30px; font-size:13px;">
-        <p>Could not fetch from JioSaavn right now.</p>
-        <button onclick="fetchOnlineSongs('${query}')" style="margin-top:10px; background:var(--accent); border:none; color:#0d0e12; padding:6px 14px; border-radius:12px; font-weight:600; cursor:pointer;">Retry Search</button>
-      </div>
-    `;
-  }
-}
-
-// Auto-Load Trending Hits on Online Tab Click
-function loadOnlineSuggestions() {
-  if (!isTrendingLoaded || onlineSongs.length === 0) {
-    isTrendingLoaded = true;
-    fetchOnlineSongs("Arijit Singh Hits", true);
   } else {
-    activeTab = 'online';
-    tabOnline.classList.add('active');
-    tabAll.classList.remove('active');
-    tabLiked.classList.remove('active');
-    renderPlaylist();
+    playlistEl.innerHTML = `<p style="text-align:center; color:#8a8a93; padding:30px; font-size:13px;">No tracks found for "${query}". Try another title.</p>`;
   }
 }
 
 searchOnlineBtn.addEventListener('click', () => {
   const query = searchInput.value.trim();
-  if (query) {
-    fetchOnlineSongs(query, false);
-  } else {
-    loadOnlineSuggestions();
-  }
+  if (query) fetchOnlineSongs(query);
 });
 
 searchInput.addEventListener('keydown', (e) => {
   if (e.key === 'Enter') {
     const query = searchInput.value.trim();
-    if (query) fetchOnlineSongs(query, false);
+    if (query) fetchOnlineSongs(query);
   }
 });
 
-// Favorites System
+// Favorites Toggle
 function toggleFavorite(song) {
   const index = favorites.findIndex(fav => fav.id === song.id);
   if (index > -1) {
@@ -368,7 +341,11 @@ tabLiked.addEventListener('click', () => {
 });
 
 tabOnline.addEventListener('click', () => {
-  loadOnlineSuggestions();
+  activeTab = 'online';
+  tabOnline.classList.add('active');
+  tabAll.classList.remove('active');
+  tabLiked.classList.remove('active');
+  renderPlaylist();
 });
 
 searchInput.addEventListener('input', () => {
@@ -493,7 +470,7 @@ fullRepeatBtn.addEventListener('click', () => {
   }
 });
 
-// Progress Bar & Timer Sync
+// Seek & Timers
 function formatTime(sec) {
   if (isNaN(sec)) return "0:00";
   const m = Math.floor(sec / 60);
@@ -518,13 +495,12 @@ fullProgress.addEventListener('input', () => {
 
 audio.addEventListener('ended', nextSong);
 
-// Lockscreen Media Session
 function updateMediaSession(song) {
   if ('mediaSession' in navigator) {
     navigator.mediaSession.metadata = new MediaMetadata({
       title: song.name,
       artist: song.artist,
-      album: 'JioSaavn Official',
+      album: 'Vibe Music',
       artwork: [{ src: song.cover, sizes: '512x512', type: 'image/jpeg' }]
     });
     navigator.mediaSession.setActionHandler('play', playSong);
