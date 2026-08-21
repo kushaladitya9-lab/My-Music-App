@@ -6,7 +6,7 @@
     <title>Vibe Music</title>
     <link rel="manifest" href="manifest.json">
     <meta name="theme-color" content="#0d0e12">
-    <link rel="stylesheet" href="style.css">
+    <link rel="stylesheet" href="style.css?v=3">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 </head>
 <body>
@@ -25,23 +25,25 @@
                 </div>
             </div>
 
-            <!-- Search Bar -->
+            <!-- Search Bar with Search Button -->
             <div class="search-box">
                 <i class="fa-solid fa-magnifying-glass"></i>
-                <input type="text" id="search-input" placeholder="Search track or artist...">
+                <input type="text" id="search-input" placeholder="Search offline or type & tap online...">
+                <button id="search-online-btn" title="Search Online"><i class="fa-solid fa-arrow-right"></i></button>
             </div>
 
-            <!-- Filter Tabs (All vs Liked) -->
+            <!-- Filter Tabs -->
             <div class="filter-tabs">
-                <button class="tab-btn active" id="tab-all">All Tracks (<span id="count-all">21</span>)</button>
+                <button class="tab-btn active" id="tab-all">Local Tracks (<span id="count-all">42</span>)</button>
                 <button class="tab-btn" id="tab-liked"><i class="fa-solid fa-heart"></i> Liked (<span id="count-liked">0</span>)</button>
+                <button class="tab-btn" id="tab-online"><i class="fa-solid fa-globe"></i> Online Search</button>
             </div>
         </header>
 
-        <!-- Scrollable Playlist -->
+        <!-- Scrollable Playlist / Results -->
         <div class="playlist" id="playlist"></div>
 
-        <!-- Floating Mini Player (Bottom Bar) -->
+        <!-- Floating Mini Player -->
         <div class="mini-player" id="mini-player">
             <div class="mini-progress-bg">
                 <div class="mini-progress-fill" id="mini-progress-fill"></div>
@@ -51,8 +53,8 @@
                 <div class="song-info" id="open-full-player">
                     <img src="cover.jpg" id="mini-cover" alt="Cover">
                     <div class="text">
-                        <h4 id="mini-title">Track 1</h4>
-                        <p id="mini-artist">My Favorite Artist</p>
+                        <h4 id="mini-title">Select a Song</h4>
+                        <p id="mini-artist">Artist</p>
                     </div>
                 </div>
 
@@ -63,18 +65,18 @@
             </div>
         </div>
 
-        <!-- Full-Screen Expandable Player (Slide Up Modal) -->
+        <!-- Full-Screen Expandable Player -->
         <div class="full-screen-player" id="full-player">
             <div class="full-player-header">
                 <button id="close-full-player"><i class="fa-solid fa-chevron-down"></i></button>
                 <div class="header-text">
-                    <span>PLAYING FROM PLAYLIST</span>
-                    <h4>Vibe Collection</h4>
+                    <span id="player-mode-tag">NOW PLAYING</span>
+                    <h4 id="player-collection-tag">Vibe Music</h4>
                 </div>
                 <button class="heart-btn" id="full-heart-btn"><i class="fa-regular fa-heart"></i></button>
             </div>
 
-            <!-- Vinyl Disc Cover with Spin Animation -->
+            <!-- Vinyl Disc Cover -->
             <div class="vinyl-container">
                 <div class="vinyl-disc" id="vinyl-disc">
                     <img src="cover.jpg" id="full-cover" alt="Cover Art">
@@ -85,8 +87,8 @@
             <!-- Song Info -->
             <div class="full-song-info">
                 <div class="text">
-                    <h2 id="full-title">Track 1</h2>
-                    <p id="full-artist">My Favorite Artist</p>
+                    <h2 id="full-title">Song Title</h2>
+                    <p id="full-artist">Artist Name</p>
                 </div>
             </div>
 
@@ -99,7 +101,7 @@
                 </div>
             </div>
 
-            <!-- Full Playback Controls -->
+            <!-- Controls -->
             <div class="full-controls">
                 <button id="full-shuffle" class="toggle-btn" title="Shuffle"><i class="fa-solid fa-shuffle"></i></button>
                 <button id="full-prev" class="nav-btn"><i class="fa-solid fa-backward-step"></i></button>
@@ -109,9 +111,9 @@
             </div>
         </div>
 
-        <audio id="audio" src="song1.mp3"></audio>
+        <audio id="audio"></audio>
     </div>
 
-    <script src="script.js"></script>
+    <script src="script.js?v=3"></script>
 </body>
 </html>
