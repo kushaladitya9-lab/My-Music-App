@@ -94,7 +94,7 @@ let isShuffle = false;
 let repeatMode = 0;
 let isTrendingLoaded = false;
 
-// Theme Switcher Logic
+// Theme Switcher
 const themeDots = document.querySelectorAll('.theme-dot');
 const savedTheme = localStorage.getItem('vibe_theme') || 'cyan';
 document.documentElement.setAttribute('data-theme', savedTheme);
@@ -181,7 +181,7 @@ function renderPlaylist() {
   });
 }
 
-// FULL SONG SEARCH & SUGGESTIONS ENGINE (Direct JioSaavn High-Quality Stream)
+// DEDICATED JIOSAAVN SEARCH ENGINE WITH SMART PROXY ROTATION
 async function fetchOnlineSongs(searchQuery, isSuggestion = false) {
   const query = searchQuery.trim();
   if (!query) return;
@@ -194,83 +194,96 @@ async function fetchOnlineSongs(searchQuery, isSuggestion = false) {
   playlistEl.innerHTML = `
     <div class="loader-box">
       <div class="spinner"></div>
-      <p>${isSuggestion ? '🔥 Loading Trending & Suggested Tracks...' : `Searching full tracks for "${query}"...`}</p>
+      <p>${isSuggestion ? '🔥 Loading Trending Bollywood Hits...' : `Searching JioSaavn for "${query}"...`}</p>
     </div>
   `;
 
-  let results = [];
+  let rawResults = [];
 
-  // Multi-Endpoint Search to bypass any CORS/Server limits
-  const endpoints = [
+  // JioSaavn Mirrors + Robust CORS Proxies
+  const apiUrls = [
     `https://saavn.dev/api/search/songs?query=${encodeURIComponent(query)}&limit=30`,
     `https://saavn.sumit.co/api/search/songs?query=${encodeURIComponent(query)}&limit=30`,
-    `https://api.allorigins.win/raw?url=${encodeURIComponent(`https://saavn.dev/api/search/songs?query=${encodeURIComponent(query)}&limit=30`)}`
+    `https://corsproxy.io/?url=${encodeURIComponent(`https://saavn.dev/api/search/songs?query=${encodeURIComponent(query)}&limit=30`)}`,
+    `https://api.allorigins.win/raw?url=${encodeURIComponent(`https://saavn.dev/api/search/songs?query=${encodeURIComponent(query)}&limit=30`)}`,
+    `https://jio-saavn-api-sigma.vercel.app/api/search/songs?query=${encodeURIComponent(query)}&limit=30`,
+    `https://jiosaavn-api-sigma-sandy.vercel.app/api/search/songs?query=${encodeURIComponent(query)}&limit=30`
   ];
 
-  for (const url of endpoints) {
-    if (results.length > 0) break;
+  for (const url of apiUrls) {
+    if (rawResults.length > 0) break;
     try {
       const res = await fetch(url);
       if (res.ok) {
         const json = await res.json();
-        const items = json?.data?.results || json?.data || [];
-        if (items.length > 0) {
-          results = items.map(item => {
-            const dl = item.downloadUrl || [];
-            // Select highest quality full MP3 (320kbps / 160kbps)
-            const audioSrc = dl[dl.length - 1]?.url || dl[0]?.url || "";
-            const imgs = item.image || [];
-            const coverSrc = imgs[imgs.length - 1]?.url || imgs[0]?.url || "cover.jpg";
-
-            return {
-              id: `online-saavn-${item.id}`,
-              name: decodeHtml(item.name || item.title || "Track"),
-              artist: decodeHtml(item.artists?.primary?.[0]?.name || item.primaryArtists || "Online Artist"),
-              src: audioSrc,
-              cover: coverSrc
-            };
-          }).filter(s => s.src && s.src.includes('http'));
-        }
-      }
-    } catch (e) {
-      console.warn("Retrying next endpoint...", e);
-    }
-  }
-
-  // Backup Engine: Audius Global Search
-  if (results.length === 0) {
-    try {
-      const audiusRes = await fetch(`https://discoveryprovider.audius.co/v1/tracks/search?query=${encodeURIComponent(query)}&app_name=VibeMusicApp`);
-      if (audiusRes.ok) {
-        const audiusData = await audiusRes.json();
-        if (audiusData.data && audiusData.data.length > 0) {
-          results = audiusData.data.map(track => ({
-            id: `online-audius-${track.id}`,
-            name: track.title,
-            artist: track.user?.name || "Audius Artist",
-            src: `https://discoveryprovider.audius.co/v1/tracks/${track.id}/stream?app_name=VibeMusicApp`,
-            cover: track.artwork?.['480x480'] || track.artwork?.['150x150'] || "cover.jpg"
-          })).filter(s => s.src);
+        if (json) {
+          if (Array.isArray(json.data)) rawResults = json.data;
+          else if (json.data && Array.isArray(json.data.results)) rawResults = json.data.results;
+          else if (Array.isArray(json.results)) rawResults = json.results;
         }
       }
     } catch (err) {
-      console.error("Audius search failed", err);
+      console.warn("Retrying next JioSaavn mirror...");
     }
   }
 
-  if (results.length > 0) {
-    onlineSongs = results;
+  if (rawResults && rawResults.length > 0) {
+    onlineSongs = rawResults.map(item => {
+      // 1. Resolve Best High-Quality Audio Link
+      let audioSrc = "";
+      if (Array.isArray(item.downloadUrl) && item.downloadUrl.length > 0) {
+        const hq = item.downloadUrl.find(d => d.quality === '320kbps') || item.downloadUrl[item.downloadUrl.length - 1];
+        audioSrc = hq?.url || hq?.link || "";
+      } else if (typeof item.downloadUrl === 'string') {
+        audioSrc = item.downloadUrl;
+      } else if (item.media_url) {
+        audioSrc = item.media_url;
+      }
+
+      // 2. Resolve High-Res Artwork
+      let coverSrc = "cover.jpg";
+      if (Array.isArray(item.image) && item.image.length > 0) {
+        const hqImg = item.image.find(i => i.quality === '500x500') || item.image[item.image.length - 1];
+        coverSrc = hqImg?.url || hqImg?.link || "cover.jpg";
+      } else if (typeof item.image === 'string') {
+        coverSrc = item.image;
+      }
+
+      // 3. Resolve Artist Name
+      let artistName = "JioSaavn Music";
+      if (item.artists && Array.isArray(item.artists.primary) && item.artists.primary.length > 0) {
+        artistName = item.artists.primary.map(a => a.name).join(', ');
+      } else if (item.primaryArtists) {
+        artistName = item.primaryArtists;
+      } else if (item.artist) {
+        artistName = item.artist;
+      }
+
+      return {
+        id: `online-saavn-${item.id || Math.random()}`,
+        name: decodeHtml(item.name || item.title || "Song"),
+        artist: decodeHtml(artistName),
+        src: audioSrc,
+        cover: coverSrc
+      };
+    }).filter(s => s.src && s.src.startsWith('http'));
+
     renderPlaylist();
   } else {
-    playlistEl.innerHTML = `<p style="text-align:center; color:#8a8a93; padding:30px; font-size:13px;">No tracks found for "${query}". Try another title.</p>`;
+    playlistEl.innerHTML = `
+      <div style="text-align:center; color:#8a8a93; padding:30px; font-size:13px;">
+        <p>No exact matches on JioSaavn for "${query}".</p>
+        <p style="margin-top:8px; font-size:11px; color:#6c6d7a;">Tip: Check spelling or try singer name (e.g. Arijit Singh, Diljit, Pritam)</p>
+      </div>
+    `;
   }
 }
 
-// Online Tab Auto-load Trending Suggestions
+// Auto-Load Trending Hits on Online Tab Click
 function loadOnlineSuggestions() {
   if (!isTrendingLoaded || onlineSongs.length === 0) {
     isTrendingLoaded = true;
-    fetchOnlineSongs("Top Bollywood Trending", true);
+    fetchOnlineSongs("Trending Hindi Hits", true);
   } else {
     activeTab = 'online';
     tabOnline.classList.add('active');
@@ -296,7 +309,7 @@ searchInput.addEventListener('keydown', (e) => {
   }
 });
 
-// Favorites System
+// Favorites Toggle
 function toggleFavorite(song) {
   const index = favorites.findIndex(fav => fav.id === song.id);
   if (index > -1) {
@@ -332,7 +345,7 @@ fullHeartBtn.addEventListener('click', () => {
   if (currentPlayingSong) toggleFavorite(currentPlayingSong);
 });
 
-// Tabs Navigation
+// Tab Handlers
 tabAll.addEventListener('click', () => {
   activeTab = 'all';
   tabAll.classList.add('active');
@@ -359,7 +372,7 @@ searchInput.addEventListener('input', () => {
   }
 });
 
-// Full Player Controls
+// Full Player Modal
 openFullPlayerBtn.addEventListener('click', () => fullPlayer.classList.add('open'));
 closeFullPlayerBtn.addEventListener('click', () => fullPlayer.classList.remove('open'));
 
@@ -384,7 +397,7 @@ function playSong() {
   miniPlayIcon.className = 'fa-solid fa-pause';
   fullPlayIcon.className = 'fa-solid fa-pause';
   vinylDisc.classList.add('spinning');
-  audio.play().catch(e => console.log('Audio playback:', e));
+  audio.play().catch(e => console.log('Playback:', e));
   renderPlaylist();
   if ('mediaSession' in navigator) navigator.mediaSession.playbackState = 'playing';
 }
@@ -475,7 +488,6 @@ fullRepeatBtn.addEventListener('click', () => {
   }
 });
 
-// Progress Bar & Timer Sync
 function formatTime(sec) {
   if (isNaN(sec)) return "0:00";
   const m = Math.floor(sec / 60);
@@ -500,13 +512,12 @@ fullProgress.addEventListener('input', () => {
 
 audio.addEventListener('ended', nextSong);
 
-// Media Session
 function updateMediaSession(song) {
   if ('mediaSession' in navigator) {
     navigator.mediaSession.metadata = new MediaMetadata({
       title: song.name,
       artist: song.artist,
-      album: 'Vibe Music Online',
+      album: 'JioSaavn Stream',
       artwork: [{ src: song.cover, sizes: '512x512', type: 'image/jpeg' }]
     });
     navigator.mediaSession.setActionHandler('play', playSong);
@@ -516,6 +527,6 @@ function updateMediaSession(song) {
   }
 }
 
-// Initial Run
+// Initial Setup
 renderPlaylist();
 loadSong(localSongs[0]);
