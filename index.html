@@ -6,8 +6,10 @@
     <title>Vibe Music</title>
     <link rel="manifest" href="manifest.json">
     <meta name="theme-color" content="#0d0e12">
-    <link rel="stylesheet" href="style.css?v=3">
+    <link rel="stylesheet" href="style.css?v=4">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- YouTube Official Player API -->
+    <script src="https://www.youtube.com/iframe_api"></script>
 </head>
 <body>
     <div class="app-container">
@@ -16,7 +18,7 @@
             <div class="header-top">
                 <h1>Vibe Music</h1>
                 
-                <!-- Theme Accent Switcher -->
+                <!-- Theme Switcher -->
                 <div class="theme-picker">
                     <span class="theme-dot dot-cyan active" data-color="cyan"></span>
                     <span class="theme-dot dot-green" data-color="green"></span>
@@ -25,10 +27,10 @@
                 </div>
             </div>
 
-            <!-- Search Bar with Search Button -->
+            <!-- Search Bar -->
             <div class="search-box">
                 <i class="fa-solid fa-magnifying-glass"></i>
-                <input type="text" id="search-input" placeholder="Search offline or type & tap online...">
+                <input type="text" id="search-input" placeholder="Search track or artist...">
                 <button id="search-online-btn" title="Search Online"><i class="fa-solid fa-arrow-right"></i></button>
             </div>
 
@@ -40,7 +42,7 @@
             </div>
         </header>
 
-        <!-- Scrollable Playlist / Results -->
+        <!-- Scrollable Playlist -->
         <div class="playlist" id="playlist"></div>
 
         <!-- Floating Mini Player -->
@@ -70,7 +72,7 @@
             <div class="full-player-header">
                 <button id="close-full-player"><i class="fa-solid fa-chevron-down"></i></button>
                 <div class="header-text">
-                    <span id="player-mode-tag">NOW PLAYING</span>
+                    <span>NOW PLAYING</span>
                     <h4 id="player-collection-tag">Vibe Music</h4>
                 </div>
                 <button class="heart-btn" id="full-heart-btn"><i class="fa-regular fa-heart"></i></button>
@@ -101,7 +103,7 @@
                 </div>
             </div>
 
-            <!-- Controls -->
+            <!-- Full Playback Controls -->
             <div class="full-controls">
                 <button id="full-shuffle" class="toggle-btn" title="Shuffle"><i class="fa-solid fa-shuffle"></i></button>
                 <button id="full-prev" class="nav-btn"><i class="fa-solid fa-backward-step"></i></button>
@@ -111,9 +113,11 @@
             </div>
         </div>
 
+        <!-- Hidden Audio & YouTube Engine -->
         <audio id="audio"></audio>
+        <div id="yt-player" style="position:fixed; top:-9999px; left:-9999px; width:1px; height:1px; opacity:0; pointer-events:none;"></div>
     </div>
 
-    <script src="script.js?v=3"></script>
+    <script src="script.js?v=4"></script>
 </body>
 </html>
