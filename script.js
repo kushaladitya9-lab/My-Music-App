@@ -1,24 +1,44 @@
+// DOM Elements
 const audio = document.getElementById('audio');
-const playBtn = document.getElementById('play');
-const playIcon = document.getElementById('play-icon');
-const prevBtn = document.getElementById('prev');
-const nextBtn = document.getElementById('next');
-const shuffleBtn = document.getElementById('shuffle-btn');
-const repeatBtn = document.getElementById('repeat-btn');
-const progress = document.getElementById('progress');
-const currentTimeEl = document.getElementById('current-time');
-const durationEl = document.getElementById('duration');
-const title = document.getElementById('title');
-const artist = document.getElementById('artist');
-const cover = document.getElementById('cover');
 const playlistEl = document.getElementById('playlist');
 const searchInput = document.getElementById('search-input');
-const totalBadge = document.getElementById('total-badge');
+const tabAll = document.getElementById('tab-all');
+const tabLiked = document.getElementById('tab-liked');
+const countAll = document.getElementById('count-all');
+const countLiked = document.getElementById('count-liked');
 
-// 21 Tracks Database
+// Mini Player Elements
+const miniPlayer = document.getElementById('mini-player');
+const openFullPlayerBtn = document.getElementById('open-full-player');
+const miniTitle = document.getElementById('mini-title');
+const miniArtist = document.getElementById('mini-artist');
+const miniCover = document.getElementById('mini-cover');
+const miniPlayBtn = document.getElementById('mini-play');
+const miniPlayIcon = document.getElementById('mini-play-icon');
+const miniHeartBtn = document.getElementById('mini-heart-btn');
+const miniProgressFill = document.getElementById('mini-progress-fill');
+
+// Full Player Elements
+const fullPlayer = document.getElementById('full-player');
+const closeFullPlayerBtn = document.getElementById('close-full-player');
+const vinylDisc = document.getElementById('vinyl-disc');
+const fullCover = document.getElementById('full-cover');
+const fullTitle = document.getElementById('full-title');
+const fullArtist = document.getElementById('full-artist');
+const fullHeartBtn = document.getElementById('full-heart-btn');
+const fullProgress = document.getElementById('full-progress');
+const fullCurrentTime = document.getElementById('full-current-time');
+const fullDuration = document.getElementById('full-duration');
+const fullPlayBtn = document.getElementById('full-play');
+const fullPlayIcon = document.getElementById('full-play-icon');
+const fullPrevBtn = document.getElementById('full-prev');
+const fullNextBtn = document.getElementById('full-next');
+const fullShuffleBtn = document.getElementById('full-shuffle');
+const fullRepeatBtn = document.getElementById('full-repeat');
+
+// 21 Database Tracks
 const totalSongs = 21;
 const songs = [];
-
 for (let i = 1; i <= totalSongs; i++) {
   songs.push({
     id: i,
@@ -29,23 +49,53 @@ for (let i = 1; i <= totalSongs; i++) {
   });
 }
 
-let currentPlaylist = [...songs];
+// LocalStorage Persistent State
+let favorites = JSON.parse(localStorage.getItem('vibe_favorites')) || [];
+let activeTab = 'all';
 let songIndex = 0;
 let isPlaying = false;
 let isShuffle = false;
-let repeatMode = 0; // 0 = Off, 1 = Repeat All, 2 = Repeat One
+let repeatMode = 0; // 0 = off, 1 = repeat all, 2 = repeat one
 
-// 1. Render Playlist Function (with search support)
-function renderPlaylist(tracks = currentPlaylist) {
+// 1. Theme Switcher Logic
+const themeDots = document.querySelectorAll('.theme-dot');
+const savedTheme = localStorage.getItem('vibe_theme') || 'cyan';
+document.documentElement.setAttribute('data-theme', savedTheme);
+themeDots.forEach(dot => {
+  if (dot.dataset.color === savedTheme) dot.classList.add('active');
+  dot.addEventListener('click', () => {
+    themeDots.forEach(d => d.classList.remove('active'));
+    dot.classList.add('active');
+    const chosenTheme = dot.dataset.color;
+    document.documentElement.setAttribute('data-theme', chosenTheme);
+    localStorage.setItem('vibe_theme', chosenTheme);
+  });
+});
+
+// 2. Render Playlist with Filter & Favorites
+function renderPlaylist() {
   playlistEl.innerHTML = '';
-  
-  if (tracks.length === 0) {
-    playlistEl.innerHTML = `<p style="text-align:center; color:#6c6d7a; padding:20px; font-size:13px;">No tracks found</p>`;
+  const query = searchInput.value.toLowerCase().trim();
+
+  let filtered = songs.filter(s => {
+    const matchesSearch = s.name.toLowerCase().includes(query) || s.artist.toLowerCase().includes(query);
+    if (activeTab === 'liked') {
+      return matchesSearch && favorites.includes(s.id);
+    }
+    return matchesSearch;
+  });
+
+  countAll.innerText = songs.length;
+  countLiked.innerText = favorites.length;
+
+  if (filtered.length === 0) {
+    playlistEl.innerHTML = `<p style="text-align:center; color:#6c6d7a; padding:30px; font-size:13px;">No tracks found</p>`;
     return;
   }
 
-  tracks.forEach((song) => {
+  filtered.forEach(song => {
     const originalIndex = songs.findIndex(s => s.id === song.id);
+    const isLiked = favorites.includes(song.id);
     const item = document.createElement('div');
     item.classList.add('song-item');
     if (originalIndex === songIndex) item.classList.add('active');
@@ -56,99 +106,140 @@ function renderPlaylist(tracks = currentPlaylist) {
         <h4>${song.name}</h4>
         <p>${song.artist}</p>
       </div>
-      <i class="fa-solid ${originalIndex === songIndex && isPlaying ? 'fa-volume-high' : 'fa-play'} status-icon"></i>
+      <div class="song-item-actions">
+        <button class="heart-btn ${isLiked ? 'liked' : ''}" data-id="${song.id}">
+          <i class="${isLiked ? 'fa-solid' : 'fa-regular'} fa-heart"></i>
+        </button>
+        <i class="fa-solid ${originalIndex === songIndex && isPlaying ? 'fa-volume-high' : 'fa-play'} status-icon"></i>
+      </div>
     `;
 
-    item.addEventListener('click', () => {
+    // Track click
+    item.addEventListener('click', (e) => {
+      if (e.target.closest('.heart-btn')) return;
       songIndex = originalIndex;
       loadSong(songs[songIndex]);
       playSong();
+    });
+
+    // Heart click
+    const itemHeartBtn = item.querySelector('.heart-btn');
+    itemHeartBtn.addEventListener('click', (e) => {
+      e.stopPropagation();
+      toggleFavorite(song.id);
     });
 
     playlistEl.appendChild(item);
   });
 }
 
-// 2. Active Track UI Update
-function updatePlaylistUI() {
-  const items = document.querySelectorAll('.song-item');
-  items.forEach((item) => {
-    const trackId = parseInt(item.querySelector('.track-index').innerText);
-    const icon = item.querySelector('.status-icon');
-    
-    if (trackId === songs[songIndex].id) {
-      item.classList.add('active');
-      icon.className = `fa-solid ${isPlaying ? 'fa-volume-high' : 'fa-play'} status-icon`;
-      item.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+// 3. Favorites Toggle
+function toggleFavorite(id) {
+  if (favorites.includes(id)) {
+    favorites = favorites.filter(favId => favId !== id);
+  } else {
+    favorites.push(id);
+  }
+  localStorage.setItem('vibe_favorites', JSON.stringify(favorites));
+  updateHeartStates();
+  renderPlaylist();
+}
+
+function updateHeartStates() {
+  const currentSong = songs[songIndex];
+  const isLiked = favorites.includes(currentSong.id);
+  
+  [miniHeartBtn, fullHeartBtn].forEach(btn => {
+    if (isLiked) {
+      btn.classList.add('liked');
+      btn.innerHTML = '<i class="fa-solid fa-heart"></i>';
     } else {
-      item.classList.remove('active');
-      icon.className = 'fa-solid fa-play status-icon';
+      btn.classList.remove('liked');
+      btn.innerHTML = '<i class="fa-regular fa-heart"></i>';
     }
   });
 }
 
-// 3. MediaSession API (Lockscreen & Notification Bar Controls)
-function updateMediaSession(song) {
-  if ('mediaSession' in navigator) {
-    navigator.mediaSession.metadata = new MediaMetadata({
-      title: song.name,
-      artist: song.artist,
-      album: 'Vibe Music Collection',
-      artwork: [
-        { src: song.cover, sizes: '512x512', type: 'image/jpeg' }
-      ]
-    });
+miniHeartBtn.addEventListener('click', (e) => {
+  e.stopPropagation();
+  toggleFavorite(songs[songIndex].id);
+});
 
-    navigator.mediaSession.setActionHandler('play', () => playSong());
-    navigator.mediaSession.setActionHandler('pause', () => pauseSong());
-    navigator.mediaSession.setActionHandler('previoustrack', () => prevSong());
-    navigator.mediaSession.setActionHandler('nexttrack', () => nextSong());
-    navigator.mediaSession.setActionHandler('seekto', (details) => {
-      if (details.seekTime) {
-        audio.currentTime = details.seekTime;
-      }
-    });
-  }
-}
+fullHeartBtn.addEventListener('click', () => {
+  toggleFavorite(songs[songIndex].id);
+});
 
-// 4. Load Song
+// 4. Tab Switching
+tabAll.addEventListener('click', () => {
+  activeTab = 'all';
+  tabAll.classList.add('active');
+  tabLiked.classList.remove('active');
+  renderPlaylist();
+});
+
+tabLiked.addEventListener('click', () => {
+  activeTab = 'liked';
+  tabLiked.classList.add('active');
+  tabAll.classList.remove('active');
+  renderPlaylist();
+});
+
+searchInput.addEventListener('input', renderPlaylist);
+
+// 5. Full Screen Player Slide-Up / Down
+openFullPlayerBtn.addEventListener('click', () => fullPlayer.classList.add('open'));
+closeFullPlayerBtn.addEventListener('click', () => fullPlayer.classList.remove('open'));
+
+// 6. Song Load
 function loadSong(song) {
-  title.innerText = song.name;
-  artist.innerText = song.artist;
+  miniTitle.innerText = song.name;
+  miniArtist.innerText = song.artist;
+  miniCover.src = song.cover;
+
+  fullTitle.innerText = song.name;
+  fullArtist.innerText = song.artist;
+  fullCover.src = song.cover;
+
   audio.src = song.src;
-  cover.src = song.cover;
-  updatePlaylistUI();
+  updateHeartStates();
+  renderPlaylist();
   updateMediaSession(song);
 }
 
-// 5. Play / Pause
+// 7. Play / Pause
 function playSong() {
   isPlaying = true;
-  playIcon.classList.remove('fa-play');
-  playIcon.classList.add('fa-pause');
+  miniPlayIcon.className = 'fa-solid fa-pause';
+  fullPlayIcon.className = 'fa-solid fa-pause';
+  vinylDisc.classList.add('spinning');
   audio.play();
-  updatePlaylistUI();
+  renderPlaylist();
   if ('mediaSession' in navigator) navigator.mediaSession.playbackState = 'playing';
 }
 
 function pauseSong() {
   isPlaying = false;
-  playIcon.classList.remove('fa-pause');
-  playIcon.classList.add('fa-play');
+  miniPlayIcon.className = 'fa-solid fa-play';
+  fullPlayIcon.className = 'fa-solid fa-play';
+  vinylDisc.classList.remove('spinning');
   audio.pause();
-  updatePlaylistUI();
+  renderPlaylist();
   if ('mediaSession' in navigator) navigator.mediaSession.playbackState = 'paused';
 }
 
-playBtn.addEventListener('click', (e) => {
-  e.stopPropagation();
+function togglePlay() {
   isPlaying ? pauseSong() : playSong();
-});
+}
 
-// 6. Navigation (Next / Prev with Shuffle & Repeat support)
+miniPlayBtn.addEventListener('click', (e) => {
+  e.stopPropagation();
+  togglePlay();
+});
+fullPlayBtn.addEventListener('click', togglePlay);
+
+// 8. Next / Prev Logic
 function nextSong() {
   if (repeatMode === 2) {
-    // Repeat One Song
     audio.currentTime = 0;
     playSong();
     return;
@@ -172,7 +263,6 @@ function nextSong() {
       songIndex = 0;
     }
   }
-
   loadSong(songs[songIndex]);
   playSong();
 }
@@ -188,77 +278,69 @@ function prevSong() {
   playSong();
 }
 
-prevBtn.addEventListener('click', (e) => {
-  e.stopPropagation();
-  prevSong();
-});
+fullNextBtn.addEventListener('click', nextSong);
+fullPrevBtn.addEventListener('click', prevSong);
 
-nextBtn.addEventListener('click', (e) => {
-  e.stopPropagation();
-  nextSong();
-});
-
-// 7. Shuffle Button Toggle
-shuffleBtn.addEventListener('click', () => {
+// 9. Shuffle & Repeat Toggles
+fullShuffleBtn.addEventListener('click', () => {
   isShuffle = !isShuffle;
-  shuffleBtn.classList.toggle('active', isShuffle);
+  fullShuffleBtn.classList.toggle('active', isShuffle);
 });
 
-// 8. Repeat Button Toggle (Off -> Repeat All -> Repeat 1)
-repeatBtn.addEventListener('click', () => {
+fullRepeatBtn.addEventListener('click', () => {
   repeatMode = (repeatMode + 1) % 3;
   if (repeatMode === 0) {
-    repeatBtn.className = 'toggle-btn';
-    repeatBtn.innerHTML = '<i class="fa-solid fa-repeat"></i>';
+    fullRepeatBtn.className = 'toggle-btn';
+    fullRepeatBtn.innerHTML = '<i class="fa-solid fa-repeat"></i>';
   } else if (repeatMode === 1) {
-    repeatBtn.className = 'toggle-btn active';
-    repeatBtn.innerHTML = '<i class="fa-solid fa-repeat"></i>';
+    fullRepeatBtn.className = 'toggle-btn active';
+    fullRepeatBtn.innerHTML = '<i class="fa-solid fa-repeat"></i>';
   } else if (repeatMode === 2) {
-    repeatBtn.className = 'toggle-btn active';
-    repeatBtn.innerHTML = '<span style="font-size:10px; font-weight:bold;">🔂</span>';
+    fullRepeatBtn.className = 'toggle-btn active';
+    fullRepeatBtn.innerHTML = '<span style="font-size:12px; font-weight:bold;">🔂</span>';
   }
 });
 
-// 9. Search Bar Filter
-searchInput.addEventListener('input', (e) => {
-  const query = e.target.value.toLowerCase().trim();
-  currentPlaylist = songs.filter(s => 
-    s.name.toLowerCase().includes(query) || 
-    s.artist.toLowerCase().includes(query)
-  );
-  totalBadge.innerText = `${currentPlaylist.length} Tracks`;
-  renderPlaylist(currentPlaylist);
-});
-
-// 10. Timers & Seek Bar
-function formatTime(seconds) {
-  const min = Math.floor(seconds / 60);
-  const sec = Math.floor(seconds % 60);
-  return `${min}:${sec < 10 ? '0' : ''}${sec}`;
+// 10. Timers & Seek Sliders Sync
+function formatTime(sec) {
+  const m = Math.floor(sec / 60);
+  const s = Math.floor(sec % 60);
+  return `${m}:${s < 10 ? '0' : ''}${s}`;
 }
 
 audio.addEventListener('timeupdate', () => {
   if (audio.duration) {
-    const progressPercent = (audio.currentTime / audio.duration) * 100;
-    progress.value = progressPercent;
-    currentTimeEl.innerText = formatTime(audio.currentTime);
-    durationEl.innerText = formatTime(audio.duration);
+    const percent = (audio.currentTime / audio.duration) * 100;
+    fullProgress.value = percent;
+    miniProgressFill.style.width = `${percent}%`;
+    fullCurrentTime.innerText = formatTime(audio.currentTime);
+    fullDuration.innerText = formatTime(audio.duration);
   }
 });
 
-progress.addEventListener('input', () => {
-  const seekTime = (progress.value / 100) * audio.duration;
+fullProgress.addEventListener('input', () => {
+  const seekTime = (fullProgress.value / 100) * audio.duration;
   audio.currentTime = seekTime;
 });
 
 audio.addEventListener('ended', nextSong);
 
-if ('serviceWorker' in navigator) {
-  window.addEventListener('load', () => {
-    navigator.serviceWorker.register('sw.js');
-  });
+// Media Session API
+function updateMediaSession(song) {
+  if ('mediaSession' in navigator) {
+    navigator.mediaSession.metadata = new MediaMetadata({
+      title: song.name,
+      artist: song.artist,
+      album: 'Vibe Music Collection',
+      artwork: [{ src: song.cover, sizes: '512x512', type: 'image/jpeg' }]
+    });
+    navigator.mediaSession.setActionHandler('play', playSong);
+    navigator.mediaSession.setActionHandler('pause', pauseSong);
+    navigator.mediaSession.setActionHandler('previoustrack', prevSong);
+    navigator.mediaSession.setActionHandler('nexttrack', nextSong);
+  }
 }
 
-// Initial Load
+// Initial Setup
 renderPlaylist();
 loadSong(songs[songIndex]);

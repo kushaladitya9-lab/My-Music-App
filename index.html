@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" data-theme="cyan">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
@@ -11,50 +11,105 @@
 </head>
 <body>
     <div class="app-container">
-        <!-- Header with Live Search -->
+        <!-- Header -->
         <header>
             <div class="header-top">
                 <h1>Vibe Music</h1>
-                <span class="badge" id="total-badge">21 Tracks</span>
+                
+                <!-- Theme Accent Switcher -->
+                <div class="theme-picker">
+                    <span class="theme-dot dot-cyan active" data-color="cyan"></span>
+                    <span class="theme-dot dot-green" data-color="green"></span>
+                    <span class="theme-dot dot-purple" data-color="purple"></span>
+                    <span class="theme-dot dot-orange" data-color="orange"></span>
+                </div>
             </div>
+
+            <!-- Search Bar -->
             <div class="search-box">
                 <i class="fa-solid fa-magnifying-glass"></i>
                 <input type="text" id="search-input" placeholder="Search track or artist...">
+            </div>
+
+            <!-- Filter Tabs (All vs Liked) -->
+            <div class="filter-tabs">
+                <button class="tab-btn active" id="tab-all">All Tracks (<span id="count-all">21</span>)</button>
+                <button class="tab-btn" id="tab-liked"><i class="fa-solid fa-heart"></i> Liked (<span id="count-liked">0</span>)</button>
             </div>
         </header>
 
         <!-- Scrollable Playlist -->
         <div class="playlist" id="playlist"></div>
 
-        <!-- Floating Player -->
+        <!-- Floating Mini Player (Bottom Bar) -->
         <div class="mini-player" id="mini-player">
-            <!-- Progress & Seek Bar -->
-            <div class="progress-bar-container">
-                <span id="current-time">0:00</span>
-                <input type="range" id="progress" value="0" min="0" max="100">
-                <span id="duration">0:00</span>
+            <div class="mini-progress-bg">
+                <div class="mini-progress-fill" id="mini-progress-fill"></div>
             </div>
-
-            <!-- Main Controls Row -->
-            <div class="player-main">
-                <div class="song-info">
-                    <img src="cover.jpg" id="cover" alt="Cover">
+            
+            <div class="mini-player-content">
+                <div class="song-info" id="open-full-player">
+                    <img src="cover.jpg" id="mini-cover" alt="Cover">
                     <div class="text">
-                        <h4 id="title">Track 1</h4>
-                        <p id="artist">My Favorite Artist</p>
+                        <h4 id="mini-title">Track 1</h4>
+                        <p id="mini-artist">My Favorite Artist</p>
                     </div>
                 </div>
 
                 <div class="controls">
-                    <button id="shuffle-btn" class="toggle-btn" title="Shuffle"><i class="fa-solid fa-shuffle"></i></button>
-                    <button id="prev"><i class="fa-solid fa-backward-step"></i></button>
-                    <button id="play"><i class="fa-solid fa-play" id="play-icon"></i></button>
-                    <button id="next"><i class="fa-solid fa-forward-step"></i></button>
-                    <button id="repeat-btn" class="toggle-btn" title="Repeat"><i class="fa-solid fa-repeat"></i></button>
+                    <button class="heart-btn" id="mini-heart-btn"><i class="fa-regular fa-heart"></i></button>
+                    <button id="mini-play"><i class="fa-solid fa-play" id="mini-play-icon"></i></button>
                 </div>
             </div>
-            <audio id="audio" src="song1.mp3"></audio>
         </div>
+
+        <!-- Full-Screen Expandable Player (Slide Up Modal) -->
+        <div class="full-screen-player" id="full-player">
+            <div class="full-player-header">
+                <button id="close-full-player"><i class="fa-solid fa-chevron-down"></i></button>
+                <div class="header-text">
+                    <span>PLAYING FROM PLAYLIST</span>
+                    <h4>Vibe Collection</h4>
+                </div>
+                <button class="heart-btn" id="full-heart-btn"><i class="fa-regular fa-heart"></i></button>
+            </div>
+
+            <!-- Vinyl Disc Cover with Spin Animation -->
+            <div class="vinyl-container">
+                <div class="vinyl-disc" id="vinyl-disc">
+                    <img src="cover.jpg" id="full-cover" alt="Cover Art">
+                    <div class="vinyl-center-dot"></div>
+                </div>
+            </div>
+
+            <!-- Song Info -->
+            <div class="full-song-info">
+                <div class="text">
+                    <h2 id="full-title">Track 1</h2>
+                    <p id="full-artist">My Favorite Artist</p>
+                </div>
+            </div>
+
+            <!-- Seek Slider -->
+            <div class="full-progress-container">
+                <input type="range" id="full-progress" value="0" min="0" max="100">
+                <div class="time-labels">
+                    <span id="full-current-time">0:00</span>
+                    <span id="full-duration">0:00</span>
+                </div>
+            </div>
+
+            <!-- Full Playback Controls -->
+            <div class="full-controls">
+                <button id="full-shuffle" class="toggle-btn" title="Shuffle"><i class="fa-solid fa-shuffle"></i></button>
+                <button id="full-prev" class="nav-btn"><i class="fa-solid fa-backward-step"></i></button>
+                <button id="full-play" class="main-play-btn"><i class="fa-solid fa-play" id="full-play-icon"></i></button>
+                <button id="full-next" class="nav-btn"><i class="fa-solid fa-forward-step"></i></button>
+                <button id="full-repeat" class="toggle-btn" title="Repeat"><i class="fa-solid fa-repeat"></i></button>
+            </div>
+        </div>
+
+        <audio id="audio" src="song1.mp3"></audio>
     </div>
 
     <script src="script.js"></script>
