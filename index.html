@@ -11,23 +11,31 @@
 </head>
 <body>
     <div class="app-container">
-        <!-- Header -->
+        <!-- Header with Live Search -->
         <header>
-            <h1>Vibe Music</h1>
+            <div class="header-top">
+                <h1>Vibe Music</h1>
+                <span class="badge" id="total-badge">21 Tracks</span>
+            </div>
+            <div class="search-box">
+                <i class="fa-solid fa-magnifying-glass"></i>
+                <input type="text" id="search-input" placeholder="Search track or artist...">
+            </div>
         </header>
 
         <!-- Scrollable Playlist -->
         <div class="playlist" id="playlist"></div>
 
-        <!-- Bottom Player with Seek Slider -->
+        <!-- Floating Player -->
         <div class="mini-player" id="mini-player">
-            <!-- Progress / Seek Bar (Gaana aage-piche karne ke liye) -->
+            <!-- Progress & Seek Bar -->
             <div class="progress-bar-container">
                 <span id="current-time">0:00</span>
                 <input type="range" id="progress" value="0" min="0" max="100">
                 <span id="duration">0:00</span>
             </div>
 
+            <!-- Main Controls Row -->
             <div class="player-main">
                 <div class="song-info">
                     <img src="cover.jpg" id="cover" alt="Cover">
@@ -36,10 +44,13 @@
                         <p id="artist">My Favorite Artist</p>
                     </div>
                 </div>
+
                 <div class="controls">
+                    <button id="shuffle-btn" class="toggle-btn" title="Shuffle"><i class="fa-solid fa-shuffle"></i></button>
                     <button id="prev"><i class="fa-solid fa-backward-step"></i></button>
                     <button id="play"><i class="fa-solid fa-play" id="play-icon"></i></button>
                     <button id="next"><i class="fa-solid fa-forward-step"></i></button>
+                    <button id="repeat-btn" class="toggle-btn" title="Repeat"><i class="fa-solid fa-repeat"></i></button>
                 </div>
             </div>
             <audio id="audio" src="song1.mp3"></audio>
