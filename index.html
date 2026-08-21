@@ -6,10 +6,8 @@
     <title>Vibe Music</title>
     <link rel="manifest" href="manifest.json">
     <meta name="theme-color" content="#0d0e12">
-    <link rel="stylesheet" href="style.css?v=4">
+    <link rel="stylesheet" href="style.css?v=5">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <!-- YouTube Official Player API -->
-    <script src="https://www.youtube.com/iframe_api"></script>
 </head>
 <body>
     <div class="app-container">
@@ -30,15 +28,13 @@
             <!-- Search Bar -->
             <div class="search-box">
                 <i class="fa-solid fa-magnifying-glass"></i>
-                <input type="text" id="search-input" placeholder="Search track or artist...">
-                <button id="search-online-btn" title="Search Online"><i class="fa-solid fa-arrow-right"></i></button>
+                <input type="text" id="search-input" placeholder="Search in your playlist...">
             </div>
 
             <!-- Filter Tabs -->
             <div class="filter-tabs">
-                <button class="tab-btn active" id="tab-all">Local Tracks (<span id="count-all">42</span>)</button>
+                <button class="tab-btn active" id="tab-all">All Tracks (<span id="count-all">42</span>)</button>
                 <button class="tab-btn" id="tab-liked"><i class="fa-solid fa-heart"></i> Liked (<span id="count-liked">0</span>)</button>
-                <button class="tab-btn" id="tab-online"><i class="fa-solid fa-globe"></i> Online Search</button>
             </div>
         </header>
 
@@ -103,7 +99,7 @@
                 </div>
             </div>
 
-            <!-- Full Playback Controls -->
+            <!-- Playback Controls -->
             <div class="full-controls">
                 <button id="full-shuffle" class="toggle-btn" title="Shuffle"><i class="fa-solid fa-shuffle"></i></button>
                 <button id="full-prev" class="nav-btn"><i class="fa-solid fa-backward-step"></i></button>
@@ -113,11 +109,9 @@
             </div>
         </div>
 
-        <!-- Hidden Audio & YouTube Engine -->
         <audio id="audio"></audio>
-        <div id="yt-player" style="position:fixed; top:-9999px; left:-9999px; width:1px; height:1px; opacity:0; pointer-events:none;"></div>
     </div>
 
-    <script src="script.js?v=4"></script>
+    <script src="script.js?v=5"></script>
 </body>
 </html>
