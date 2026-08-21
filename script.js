@@ -1,18 +1,15 @@
-// HTML Elements select karna
+// DOM Elements select karna
 const audio = document.getElementById('audio');
 const playBtn = document.getElementById('play');
 const playIcon = document.getElementById('play-icon');
 const prevBtn = document.getElementById('prev');
 const nextBtn = document.getElementById('next');
-const progress = document.getElementById('progress');
-const currentTimeEl = document.getElementById('current-time');
-const durationEl = document.getElementById('duration');
 const title = document.getElementById('title');
 const artist = document.getElementById('artist');
 const cover = document.getElementById('cover');
 const playlistEl = document.getElementById('playlist');
 
-// 21 Songs Playlist Generate karna
+// 21 Songs Array Generate karna
 const totalSongs = 21;
 const songs = [];
 
@@ -29,24 +26,24 @@ for (let i = 1; i <= totalSongs; i++) {
 let songIndex = 0;
 let isPlaying = false;
 
-// Playlist UI Render karna
+// Playlist UI Render Function
 function renderPlaylist() {
   playlistEl.innerHTML = '';
   songs.forEach((song, index) => {
     const item = document.createElement('div');
-    item.classList.add('playlist-item');
+    item.classList.add('song-item');
     if (index === songIndex) item.classList.add('active');
 
     item.innerHTML = `
-      <span class="item-number">${index + 1 < 10 ? '0' + (index + 1) : index + 1}</span>
-      <div class="item-info">
-        <div class="item-title">${song.name}</div>
-        <div class="item-artist">${song.artist}</div>
+      <span class="track-index">${index + 1 < 10 ? '0' + (index + 1) : index + 1}</span>
+      <div class="details">
+        <h4>${song.name}</h4>
+        <p>${song.artist}</p>
       </div>
-      <i class="fa-solid ${index === songIndex && isPlaying ? 'fa-volume-high' : 'fa-play'} item-icon"></i>
+      <i class="fa-solid ${index === songIndex && isPlaying ? 'fa-volume-high' : 'fa-play'} status-icon"></i>
     `;
 
-    // Click par gaana load & play
+    // Gaane par tap/click karne par load & play
     item.addEventListener('click', () => {
       songIndex = index;
       loadSong(songs[songIndex]);
@@ -57,52 +54,52 @@ function renderPlaylist() {
   });
 }
 
-// Active Track Highlight Update karna
-function updateActiveTrack() {
-  const items = document.querySelectorAll('.playlist-item');
+// Active Track Highlight & Icons Update
+function updatePlaylistUI() {
+  const items = document.querySelectorAll('.song-item');
   items.forEach((item, index) => {
-    const icon = item.querySelector('.item-icon');
+    const icon = item.querySelector('.status-icon');
     if (index === songIndex) {
       item.classList.add('active');
-      icon.className = `fa-solid ${isPlaying ? 'fa-volume-high' : 'fa-play'} item-icon`;
-      // Auto-scroll track into view
+      icon.className = `fa-solid ${isPlaying ? 'fa-volume-high' : 'fa-play'} status-icon`;
       item.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
     } else {
       item.classList.remove('active');
-      icon.className = 'fa-solid fa-play item-icon';
+      icon.className = 'fa-solid fa-play status-icon';
     }
   });
 }
 
-// Load Song
+// Gaana Load Function
 function loadSong(song) {
   title.innerText = song.name;
   artist.innerText = song.artist;
   audio.src = song.src;
   cover.src = song.cover;
-  updateActiveTrack();
+  updatePlaylistUI();
 }
 
-// Play Song
+// Play
 function playSong() {
   isPlaying = true;
   playIcon.classList.remove('fa-play');
   playIcon.classList.add('fa-pause');
   audio.play();
-  updateActiveTrack();
+  updatePlaylistUI();
 }
 
-// Pause Song
+// Pause
 function pauseSong() {
   isPlaying = false;
   playIcon.classList.remove('fa-pause');
   playIcon.classList.add('fa-play');
   audio.pause();
-  updateActiveTrack();
+  updatePlaylistUI();
 }
 
 // Play / Pause Button Click
-playBtn.addEventListener('click', () => {
+playBtn.addEventListener('click', (e) => {
+  e.stopPropagation();
   if (isPlaying) {
     pauseSong();
   } else {
@@ -110,7 +107,7 @@ playBtn.addEventListener('click', () => {
   }
 });
 
-// Previous Song
+// Previous Song ⏮️
 function prevSong() {
   songIndex--;
   if (songIndex < 0) songIndex = songs.length - 1;
@@ -118,7 +115,7 @@ function prevSong() {
   playSong();
 }
 
-// Next Song
+// Next Song ⏭️
 function nextSong() {
   songIndex++;
   if (songIndex > songs.length - 1) songIndex = 0;
@@ -126,36 +123,19 @@ function nextSong() {
   playSong();
 }
 
-prevBtn.addEventListener('click', prevSong);
-nextBtn.addEventListener('click', nextSong);
-
-// Time Format (M:SS)
-function formatTime(seconds) {
-  const min = Math.floor(seconds / 60);
-  const sec = Math.floor(seconds % 60);
-  return `${min}:${sec < 10 ? '0' : ''}${sec}`;
-}
-
-// Progress Bar Update
-audio.addEventListener('timeupdate', () => {
-  if (audio.duration) {
-    const progressPercent = (audio.currentTime / audio.duration) * 100;
-    progress.value = progressPercent;
-
-    currentTimeEl.innerText = formatTime(audio.currentTime);
-    durationEl.innerText = formatTime(audio.duration);
-  }
+prevBtn.addEventListener('click', (e) => {
+  e.stopPropagation();
+  prevSong();
 });
 
-// Seek bar input
-progress.addEventListener('input', () => {
-  const seekTime = (progress.value / 100) * audio.duration;
-  audio.currentTime = seekTime;
+nextBtn.addEventListener('click', (e) => {
+  e.stopPropagation();
+  nextSong();
 });
 
-// Song end pe automatic agla track
+// Gaana khatam hone par automatic agla gaana chalna
 audio.addEventListener('ended', nextSong);
 
-// Initial Setup
+// Initial App Setup
 renderPlaylist();
 loadSong(songs[songIndex]);
