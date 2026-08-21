@@ -36,20 +36,53 @@ const fullNextBtn = document.getElementById('full-next');
 const fullShuffleBtn = document.getElementById('full-shuffle');
 const fullRepeatBtn = document.getElementById('full-repeat');
 
-// 21 Database Tracks
-const totalSongs = 21;
-const songs = [];
-for (let i = 1; i <= totalSongs; i++) {
-  songs.push({
-    id: i,
-    name: `Track ${i}`,
-    artist: "My Favorite Artist",
-    src: `song${i}.mp3`,
-    cover: "cover.jpg"
-  });
-}
+// 42 Real Tracks Database
+const songs = [
+  { id: 1, name: "Chala Jata Hoon", artist: "My Favorite Artist", src: "song1.mp3", cover: "cover.jpg" },
+  { id: 2, name: "Tera Mera Pyar Amar", artist: "My Favorite Artist", src: "song2.mp3", cover: "cover.jpg" },
+  { id: 3, name: "Acha Lagta Hai", artist: "My Favorite Artist", src: "song3.mp3", cover: "cover.jpg" },
+  { id: 4, name: "Iss Tarah", artist: "My Favorite Artist", src: "song4.mp3", cover: "cover.jpg" },
+  { id: 5, name: "Mere Sapno Ki Rani", artist: "My Favorite Artist", src: "song5.mp3", cover: "cover.jpg" },
+  { id: 6, name: "Ishq Risk", artist: "My Favorite Artist", src: "song6.mp3", cover: "cover.jpg" },
+  { id: 7, name: "Give It Up To Me", artist: "My Favorite Artist", src: "song7.mp3", cover: "cover.jpg" },
+  { id: 8, name: "Kabhi Jo Badal Barse", artist: "My Favorite Artist", src: "song8.mp3", cover: "cover.jpg" },
+  { id: 9, name: "Dekhte Dekhte", artist: "My Favorite Artist", src: "song9.mp3", cover: "cover.jpg" },
+  { id: 10, name: "Be Intehaan", artist: "My Favorite Artist", src: "song10.mp3", cover: "cover.jpg" },
+  { id: 11, name: "Haareya", artist: "My Favorite Artist", src: "song11.mp3", cover: "cover.jpg" },
+  { id: 12, name: "Tum Jo Aaye", artist: "My Favorite Artist", src: "song12.mp3", cover: "cover.jpg" },
+  { id: 13, name: "Nit Khair Manga", artist: "My Favorite Artist", src: "song13.mp3", cover: "cover.jpg" },
+  { id: 14, name: "Hero Splendor", artist: "My Favorite Artist", src: "song14.mp3", cover: "cover.jpg" },
+  { id: 15, name: "Tum Tak", artist: "My Favorite Artist", src: "song15.mp3", cover: "cover.jpg" },
+  { id: 16, name: "Likhe Jo Khat Tujhe", artist: "My Favorite Artist", src: "song16.mp3", cover: "cover.jpg" },
+  { id: 17, name: "Pehli Nazar Mein", artist: "My Favorite Artist", src: "song17.mp3", cover: "cover.jpg" },
+  { id: 18, name: "Dekha Hazaro Dafaa", artist: "My Favorite Artist", src: "song18.mp3", cover: "cover.jpg" },
+  { id: 19, name: "Bol Na Halke Halke", artist: "My Favorite Artist", src: "song19.mp3", cover: "cover.jpg" },
+  { id: 20, name: "Ishq Mubarak", artist: "My Favorite Artist", src: "song20.mp3", cover: "cover.jpg" },
+  { id: 21, name: "Baarish", artist: "My Favorite Artist", src: "song21.mp3", cover: "cover.jpg" },
+  { id: 22, name: "Aaja Sanam Madhur Chandni Mein", artist: "My Favorite Artist", src: "song22.mp3", cover: "cover.jpg" },
+  { id: 23, name: "Aashiq Tera", artist: "My Favorite Artist", src: "song23.mp3", cover: "cover.jpg" },
+  { id: 24, name: "Samjho Na", artist: "My Favorite Artist", src: "song24.mp3", cover: "cover.jpg" },
+  { id: 25, name: "Shree Hari Stotram", artist: "My Favorite Artist", src: "song25.mp3", cover: "cover.jpg" },
+  { id: 26, name: "Pal Pal Dil ke Paas", artist: "My Favorite Artist", src: "song26.mp3", cover: "cover.jpg" },
+  { id: 27, name: "Dil Ka Jo Haal Hai", artist: "My Favorite Artist", src: "song27.mp3", cover: "cover.jpg" },
+  { id: 28, name: "Wo Ladki Hai Kahan", artist: "My Favorite Artist", src: "song28.mp3", cover: "cover.jpg" },
+  { id: 29, name: "Itna Na Mujhse Tu Pyar Badha", artist: "My Favorite Artist", src: "song29.mp3", cover: "cover.jpg" },
+  { id: 30, name: "Jahan Mein Aesa Kaun Hai", artist: "My Favorite Artist", src: "song30.mp3", cover: "cover.jpg" },
+  { id: 31, name: "Jiya Dhadak Dhadak Jaye", artist: "My Favorite Artist", src: "song31.mp3", cover: "cover.jpg" },
+  { id: 32, name: "Kiston", artist: "My Favorite Artist", src: "song32.mp3", cover: "cover.jpg" },
+  { id: 33, name: "Maan Mera Old", artist: "My Favorite Artist", src: "song33.mp3", cover: "cover.jpg" },
+  { id: 34, name: "Maan Mera New", artist: "My Favorite Artist", src: "song34.mp3", cover: "cover.jpg" },
+  { id: 35, name: "Monta Re", artist: "My Favorite Artist", src: "song35.mp3", cover: "cover.jpg" },
+  { id: 36, name: "SANAM :- Chala Jata Hoon", artist: "My Favorite Artist", src: "song36.mp3", cover: "cover.jpg" },
+  { id: 37, name: "Tu Tu Hai Wahi", artist: "My Favorite Artist", src: "song37.mp3", cover: "cover.jpg" },
+  { id: 38, name: "Uljhan", artist: "My Favorite Artist", src: "song38.mp3", cover: "cover.jpg" },
+  { id: 39, name: "Ye Tune Kya Kiya", artist: "My Favorite Artist", src: "song39.mp3", cover: "cover.jpg" },
+  { id: 40, name: "Yeh Fitoor Mera", artist: "My Favorite Artist", src: "song40.mp3", cover: "cover.jpg" },
+  { id: 41, name: "Yeh Parda Hata do", artist: "My Favorite Artist", src: "song41.mp3", cover: "cover.jpg" },
+  { id: 42, name: "Mere Naam Tu", artist: "My Favorite Artist", src: "song42.mp3", cover: "cover.jpg" }
+];
 
-// LocalStorage Persistent State
+// Persistent Favorites & State
 let favorites = JSON.parse(localStorage.getItem('vibe_favorites')) || [];
 let activeTab = 'all';
 let songIndex = 0;
@@ -72,7 +105,7 @@ themeDots.forEach(dot => {
   });
 });
 
-// 2. Render Playlist with Filter & Favorites
+// 2. Render Playlist with Live Search & Tabs
 function renderPlaylist() {
   playlistEl.innerHTML = '';
   const query = searchInput.value.toLowerCase().trim();
@@ -114,7 +147,7 @@ function renderPlaylist() {
       </div>
     `;
 
-    // Track click
+    // Song Selection
     item.addEventListener('click', (e) => {
       if (e.target.closest('.heart-btn')) return;
       songIndex = originalIndex;
@@ -122,7 +155,7 @@ function renderPlaylist() {
       playSong();
     });
 
-    // Heart click
+    // Heart Icon Click
     const itemHeartBtn = item.querySelector('.heart-btn');
     itemHeartBtn.addEventListener('click', (e) => {
       e.stopPropagation();
@@ -133,7 +166,7 @@ function renderPlaylist() {
   });
 }
 
-// 3. Favorites Toggle
+// 3. Favorites Logic
 function toggleFavorite(id) {
   if (favorites.includes(id)) {
     favorites = favorites.filter(favId => favId !== id);
@@ -169,7 +202,7 @@ fullHeartBtn.addEventListener('click', () => {
   toggleFavorite(songs[songIndex].id);
 });
 
-// 4. Tab Switching
+// 4. Tab Navigation
 tabAll.addEventListener('click', () => {
   activeTab = 'all';
   tabAll.classList.add('active');
@@ -186,11 +219,11 @@ tabLiked.addEventListener('click', () => {
 
 searchInput.addEventListener('input', renderPlaylist);
 
-// 5. Full Screen Player Slide-Up / Down
+// 5. Expand / Collapse Full Player
 openFullPlayerBtn.addEventListener('click', () => fullPlayer.classList.add('open'));
 closeFullPlayerBtn.addEventListener('click', () => fullPlayer.classList.remove('open'));
 
-// 6. Song Load
+// 6. Load Song
 function loadSong(song) {
   miniTitle.innerText = song.name;
   miniArtist.innerText = song.artist;
@@ -237,7 +270,7 @@ miniPlayBtn.addEventListener('click', (e) => {
 });
 fullPlayBtn.addEventListener('click', togglePlay);
 
-// 8. Next / Prev Logic
+// 8. Next / Prev Logic (with Shuffle & Repeat)
 function nextSong() {
   if (repeatMode === 2) {
     audio.currentTime = 0;
@@ -281,7 +314,7 @@ function prevSong() {
 fullNextBtn.addEventListener('click', nextSong);
 fullPrevBtn.addEventListener('click', prevSong);
 
-// 9. Shuffle & Repeat Toggles
+// 9. Shuffle & Repeat Controls
 fullShuffleBtn.addEventListener('click', () => {
   isShuffle = !isShuffle;
   fullShuffleBtn.classList.toggle('active', isShuffle);
@@ -301,7 +334,7 @@ fullRepeatBtn.addEventListener('click', () => {
   }
 });
 
-// 10. Timers & Seek Sliders Sync
+// 10. Progress & Timers Sync
 function formatTime(sec) {
   const m = Math.floor(sec / 60);
   const s = Math.floor(sec % 60);
@@ -325,7 +358,7 @@ fullProgress.addEventListener('input', () => {
 
 audio.addEventListener('ended', nextSong);
 
-// Media Session API
+// 11. Lockscreen MediaSession API
 function updateMediaSession(song) {
   if ('mediaSession' in navigator) {
     navigator.mediaSession.metadata = new MediaMetadata({
@@ -341,6 +374,13 @@ function updateMediaSession(song) {
   }
 }
 
-// Initial Setup
+// 12. Service Worker for PWA
+if ('serviceWorker' in navigator) {
+  window.addEventListener('load', () => {
+    navigator.serviceWorker.register('sw.js');
+  });
+}
+
+// Initial Load
 renderPlaylist();
 loadSong(songs[songIndex]);
