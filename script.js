@@ -108,7 +108,6 @@ themeDots.forEach(dot => {
   });
 });
 
-// HTML Entity Cleaner Helper
 function decodeHtml(html) {
   const txt = document.createElement("textarea");
   txt.innerHTML = html;
@@ -185,7 +184,7 @@ function renderPlaylist() {
   });
 }
 
-// Online Music API Search (JioSaavn API)
+// Multi-Server Robust Online Search
 async function searchOnlineSongs() {
   const query = searchInput.value.trim();
   if (!query) return;
@@ -202,36 +201,88 @@ async function searchOnlineSongs() {
     </div>
   `;
 
+  let results = [];
+
+  // Server 1: JioSaavn Primary
   try {
-    const response = await fetch(`https://saavn.dev/api/search/songs?query=${encodeURIComponent(query)}&page=1&limit=25`);
-    const data = await response.json();
-
-    if (data.success && data.data && data.data.results.length > 0) {
-      onlineSongs = data.data.results.map(item => {
-        // High quality download stream
-        const downloadUrls = item.downloadUrl || [];
-        const bestAudio = downloadUrls[downloadUrls.length - 1]?.url || downloadUrls[0]?.url || "";
-        
-        // High quality album art
-        const images = item.image || [];
-        const bestImage = images[images.length - 1]?.url || images[0]?.url || "cover.jpg";
-
-        return {
-          id: `online-${item.id}`,
-          name: decodeHtml(item.name || item.title),
-          artist: decodeHtml(item.artists?.primary?.[0]?.name || item.primaryArtists || "Online Stream"),
-          src: bestAudio,
-          cover: bestImage
-        };
-      }).filter(s => s.src);
-
-      renderPlaylist();
-    } else {
-      playlistEl.innerHTML = `<p style="text-align:center; color:#6c6d7a; padding:30px; font-size:13px;">No online tracks found for "${query}"</p>`;
+    const res1 = await fetch(`https://saavn.sumit.co/api/search/songs?query=${encodeURIComponent(query)}&limit=25`);
+    if (res1.ok) {
+      const data1 = await res1.json();
+      const items = data1?.data?.results || data1?.data || [];
+      if (items.length > 0) {
+        results = items.map(item => {
+          const downloadUrls = item.downloadUrl || [];
+          const bestAudio = downloadUrls[downloadUrls.length - 1]?.url || downloadUrls[0]?.url || "";
+          const images = item.image || [];
+          const bestImage = images[images.length - 1]?.url || images[0]?.url || "cover.jpg";
+          return {
+            id: `online-saavn-${item.id}`,
+            name: decodeHtml(item.name || item.title || "Unknown"),
+            artist: decodeHtml(item.artists?.primary?.[0]?.name || item.primaryArtists || "Online Artist"),
+            src: bestAudio,
+            cover: bestImage
+          };
+        }).filter(s => s.src);
+      }
     }
   } catch (err) {
-    console.error(err);
-    playlistEl.innerHTML = `<p style="text-align:center; color:#ff5555; padding:30px; font-size:13px;">Network error! Check internet connection.</p>`;
+    console.warn("Server 1 unavailable, switching to backup...");
+  }
+
+  // Server 2: JioSaavn Backup
+  if (results.length === 0) {
+    try {
+      const res2 = await fetch(`https://saavn.dev/api/search/songs?query=${encodeURIComponent(query)}&limit=25`);
+      if (res2.ok) {
+        const data2 = await res2.json();
+        const items = data2?.data?.results || data2?.data || [];
+        if (items.length > 0) {
+          results = items.map(item => {
+            const downloadUrls = item.downloadUrl || [];
+            const bestAudio = downloadUrls[downloadUrls.length - 1]?.url || downloadUrls[0]?.url || "";
+            const images = item.image || [];
+            const bestImage = images[images.length - 1]?.url || images[0]?.url || "cover.jpg";
+            return {
+              id: `online-saavn2-${item.id}`,
+              name: decodeHtml(item.name || item.title || "Unknown"),
+              artist: decodeHtml(item.artists?.primary?.[0]?.name || item.primaryArtists || "Online Artist"),
+              src: bestAudio,
+              cover: bestImage
+            };
+          }).filter(s => s.src);
+        }
+      }
+    } catch (err) {
+      console.warn("Server 2 unavailable, switching to Global Engine...");
+    }
+  }
+
+  // Server 3: Apple iTunes Engine (100% Uptime, Zero CORS restrictions)
+  if (results.length === 0) {
+    try {
+      const res3 = await fetch(`https://itunes.apple.com/search?term=${encodeURIComponent(query)}&media=music&entity=song&limit=25`);
+      if (res3.ok) {
+        const data3 = await res3.json();
+        if (data3.results && data3.results.length > 0) {
+          results = data3.results.map(item => ({
+            id: `online-itunes-${item.trackId}`,
+            name: item.trackName,
+            artist: item.artistName,
+            src: item.previewUrl,
+            cover: item.artworkUrl100 ? item.artworkUrl100.replace('100x100bb', '500x500bb') : "cover.jpg"
+          })).filter(s => s.src);
+        }
+      }
+    } catch (err) {
+      console.error("All search servers unreachable", err);
+    }
+  }
+
+  if (results.length > 0) {
+    onlineSongs = results;
+    renderPlaylist();
+  } else {
+    playlistEl.innerHTML = `<p style="text-align:center; color:#8a8a93; padding:30px; font-size:13px;">No online tracks found for "${query}". Try another title.</p>`;
   }
 }
 
@@ -242,7 +293,7 @@ searchInput.addEventListener('keydown', (e) => {
   }
 });
 
-// Favorites System (Persist online & local songs)
+// Favorites Toggle
 function toggleFavorite(song) {
   const index = favorites.findIndex(fav => fav.id === song.id);
   if (index > -1) {
@@ -309,11 +360,10 @@ searchInput.addEventListener('input', () => {
   }
 });
 
-// Expand Player
+// Full Player Controls
 openFullPlayerBtn.addEventListener('click', () => fullPlayer.classList.add('open'));
 closeFullPlayerBtn.addEventListener('click', () => fullPlayer.classList.remove('open'));
 
-// Load Song
 function loadSong(song) {
   currentPlayingSong = song;
   miniTitle.innerText = song.name;
@@ -330,13 +380,12 @@ function loadSong(song) {
   updateMediaSession(song);
 }
 
-// Play / Pause
 function playSong() {
   isPlaying = true;
   miniPlayIcon.className = 'fa-solid fa-pause';
   fullPlayIcon.className = 'fa-solid fa-pause';
   vinylDisc.classList.add('spinning');
-  audio.play().catch(e => console.log('Playback error:', e));
+  audio.play().catch(e => console.log('Playback:', e));
   renderPlaylist();
   if ('mediaSession' in navigator) navigator.mediaSession.playbackState = 'playing';
 }
@@ -361,7 +410,6 @@ miniPlayBtn.addEventListener('click', (e) => {
 });
 fullPlayBtn.addEventListener('click', togglePlay);
 
-// Next / Prev Logic
 function nextSong() {
   if (repeatMode === 2) {
     audio.currentTime = 0;
@@ -409,7 +457,6 @@ function prevSong() {
 fullNextBtn.addEventListener('click', nextSong);
 fullPrevBtn.addEventListener('click', prevSong);
 
-// Shuffle & Repeat
 fullShuffleBtn.addEventListener('click', () => {
   isShuffle = !isShuffle;
   fullShuffleBtn.classList.toggle('active', isShuffle);
@@ -429,7 +476,6 @@ fullRepeatBtn.addEventListener('click', () => {
   }
 });
 
-// Seek & Timers
 function formatTime(sec) {
   if (isNaN(sec)) return "0:00";
   const m = Math.floor(sec / 60);
@@ -454,7 +500,6 @@ fullProgress.addEventListener('input', () => {
 
 audio.addEventListener('ended', nextSong);
 
-// Lockscreen Media Session
 function updateMediaSession(song) {
   if ('mediaSession' in navigator) {
     navigator.mediaSession.metadata = new MediaMetadata({
