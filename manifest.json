@@ -1,12 +1,22 @@
 {
+  "id": "/vibe-music-app/",
   "name": "Vibe Music App",
   "short_name": "VibeMusic",
+  "description": "A sleek custom mobile music player app",
   "start_url": "./index.html",
+  "scope": "./",
   "display": "standalone",
+  "orientation": "portrait",
   "background_color": "#0d0e12",
   "theme_color": "#0d0e12",
-  "orientation": "portrait",
+  "categories": ["music", "entertainment"],
   "icons": [
+    {
+      "src": "cover.jpg",
+      "sizes": "192x192",
+      "type": "image/jpeg",
+      "purpose": "any"
+    },
     {
       "src": "cover.jpg",
       "sizes": "512x512",
